@@ -6,9 +6,9 @@ from telegram.ext import (
     ContextTypes,
     filters
 )
+
 import requests
 import re
-import os
 
 # ---------------------------
 # CONFIG
@@ -21,16 +21,22 @@ user_data = {}
 # ---------------------------
 app = ApplicationBuilder().token(TOKEN).build()
 
-
 # ---------------------------
 # GET POST ID
 # ---------------------------
 def get_post_id(url):
     try:
         html = requests.get(url, timeout=10).text
+
         match = re.search(r'postid-(\d+)', html)
-        return match.group(1) if match else None
-    except:
+
+        if match:
+            return match.group(1)
+
+        return None
+
+    except Exception as e:
+        print("POST ID ERROR:", e)
         return None
 
 
@@ -38,6 +44,7 @@ def get_post_id(url):
 # GET PLAYER LINK
 # ---------------------------
 def get_player_link(post_id, nume=1, type_="movie"):
+
     ajax_url = "https://khdiamond.net/wp-admin/admin-ajax.php"
 
     data = {
@@ -49,21 +56,29 @@ def get_player_link(post_id, nume=1, type_="movie"):
 
     try:
         r = requests.post(ajax_url, data=data, timeout=10)
-        match = re.search(r'https:\\/\\/player\.khdiamond\.net[^\"]+', r.text)
+
+        match = re.search(
+            r'https:\\/\\/player\.khdiamond\.net[^"]+',
+            r.text
+        )
 
         if match:
             return match.group(0).replace("\\/", "/")
 
         return None
-    except:
+
+    except Exception as e:
+        print("PLAYER ERROR:", e)
         return None
 
 
 # ---------------------------
-# NEXT EPISODE
+# NEXT EPISODE URL
 # ---------------------------
 def next_episode_url(url):
+
     match = re.search(r"(.*-)(\d+x)(\d+)/?$", url)
+
     if not match:
         return None
 
@@ -78,13 +93,19 @@ def next_episode_url(url):
 # SEND EPISODE
 # ---------------------------
 async def send_episode(chat_id, context, url, post_id):
+
     link = get_player_link(post_id, 1, "tv")
 
     if not link:
-        await context.bot.send_message(chat_id, "❌ Episode not found")
+        await context.bot.send_message(
+            chat_id,
+            "❌ Episode not found"
+        )
         return
 
+    # SAVE CURRENT DATA
     user_data[chat_id]["url"] = url
+    user_data[chat_id]["post_id"] = post_id
 
     keyboard = [
         [InlineKeyboardButton("🔁 Refresh", callback_data="refresh")],
@@ -102,7 +123,8 @@ async def send_episode(chat_id, context, url, post_id):
 # HANDLE MESSAGE
 # ---------------------------
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = update.message.text
+
+    text = update.message.text.strip()
     chat_id = update.effective_chat.id
 
     if text.startswith("https://khdiamond.net/"):
@@ -110,7 +132,9 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         post_id = get_post_id(text)
 
         if not post_id:
-            await update.message.reply_text("❌ Cannot get post ID")
+            await update.message.reply_text(
+                "❌ Cannot get post ID"
+            )
             return
 
         user_data[chat_id] = {
@@ -120,8 +144,15 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         keyboard = [
             [
-                InlineKeyboardButton("🎬 Movie", callback_data="movie"),
-                InlineKeyboardButton("📺 Episode", callback_data="episode")
+                InlineKeyboardButton(
+                    "🎬 Movie",
+                    callback_data="movie"
+                ),
+
+                InlineKeyboardButton(
+                    "📺 Episode",
+                    callback_data="episode"
+                )
             ]
         ]
 
@@ -131,13 +162,16 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
     else:
-        await update.message.reply_text("❌ Only khdiamond links allowed")
+        await update.message.reply_text(
+            "❌ Only khdiamond links allowed"
+        )
 
 
 # ---------------------------
 # BUTTON HANDLER
 # ---------------------------
 async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+
     query = update.callback_query
     await query.answer()
 
@@ -145,59 +179,96 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     data = query.data
 
     if chat_id not in user_data:
-        await query.message.reply_text("Send link first.")
+        await query.message.reply_text(
+            "❌ Send link first"
+        )
         return
 
     post_id = user_data[chat_id]["post_id"]
     url = user_data[chat_id]["url"]
 
-    # MOVIE
+    # ---------------- MOVIE ----------------
     if data == "movie":
+
         link = get_player_link(post_id, 1, "movie")
+
+        if not link:
+            await query.message.reply_text(
+                "❌ Movie not found"
+            )
+            return
 
         await query.message.reply_text(
             f"🎬 MOVIE:\n{link}"
         )
 
-    # EPISODE
+    # ---------------- EPISODE ----------------
     elif data == "episode":
-        await send_episode(chat_id, context, url, post_id)
 
-    # NEXT EPISODE
+        await send_episode(
+            chat_id,
+            context,
+            url,
+            post_id
+        )
+
+    # ---------------- NEXT EPISODE ----------------
     elif data == "next_ep":
-        new_url = next_episode_url(url)
+
+        current_url = user_data[chat_id]["url"]
+
+        new_url = next_episode_url(current_url)
 
         if not new_url:
-            await query.message.reply_text("❌ Cannot next episode")
+            await query.message.reply_text(
+                "❌ Cannot next episode"
+            )
             return
 
-        await send_episode(chat_id, context, new_url, post_id)
+        # GET NEW POST ID
+        new_post_id = get_post_id(new_url)
 
-    # REFRESH
+        if not new_post_id:
+            await query.message.reply_text(
+                "❌ Cannot get new post ID"
+            )
+            return
+
+        # SEND NEW EPISODE
+        await send_episode(
+            chat_id,
+            context,
+            new_url,
+            new_post_id
+        )
+
+    # ---------------- REFRESH ----------------
     elif data == "refresh":
-        await send_episode(chat_id, context, url, post_id)
+
+        await send_episode(
+            chat_id,
+            context,
+            url,
+            post_id
+        )
 
 
 # ---------------------------
 # REGISTER HANDLERS
 # ---------------------------
-app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-app.add_handler(CallbackQueryHandler(button_handler))
+app.add_handler(
+    MessageHandler(
+        filters.TEXT & ~filters.COMMAND,
+        handle_message
+    )
+)
 
+app.add_handler(
+    CallbackQueryHandler(button_handler)
+)
 
 # ---------------------------
 # RUN BOT
 # ---------------------------
 print("Bot running...")
 app.run_polling()
-
-PORT = int(os.environ.get("PORT", 8080))
-
-print("Bot running on webhook...")
-
-app.run_webhook(
-    listen="0.0.0.0",
-    port=PORT,
-    url_path=TOKEN,
-    webhook_url=f"https://YOUR_CLOUD_RUN_URL/{TOKEN}"
-)
