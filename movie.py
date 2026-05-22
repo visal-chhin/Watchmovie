@@ -107,7 +107,7 @@ def next_episode_url(url):
 # ---------------------------
 # SEND MOVIE
 # ---------------------------
-async def send_movie(chat_id, context, post_id):
+async def send_movie(chat_id, context, post_id, url=None):
 
     link = get_player_link(post_id, 1, "movie")
 
@@ -115,16 +115,22 @@ async def send_movie(chat_id, context, post_id):
         await context.bot.send_message(chat_id, "❌ Movie not found")
         return
 
+    ensure_user(chat_id)
+
+    # save like episode style
+    user_data[chat_id]["url"] = url
+    user_data[chat_id]["post_id"] = post_id
+    user_data[chat_id]["type"] = "movie"
+
     keyboard = [
-        [InlineKeyboardButton("🔁 Refresh Movie", callback_data="refresh_movie")]
+        [InlineKeyboardButton("🔁 Refresh", callback_data="refresh_movie")]
     ]
 
     await context.bot.send_message(
         chat_id,
-        f"🎬 MOVIE:\n{link}",
+        f"📺 MOVIE:\n{url}\n\n🎥 WATCH:\n{link}",
         reply_markup=InlineKeyboardMarkup(keyboard)
     )
-
 # ---------------------------
 # SEND EPISODE
 # ---------------------------
@@ -217,12 +223,11 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         user_data[chat_id]["type"] = "movie"
 
-        await send_movie(chat_id, context, post_id)
+        await send_movie(chat_id, context, post_id,url)
 
     # ---------------- REFRESH MOVIE ----------------
     elif data == "refresh_movie":
-
-        await send_movie(chat_id, context, post_id)
+        await send_movie(chat_id, context, post_id, url)
 
     # ---------------- EPISODE ----------------
     elif data == "episode":
