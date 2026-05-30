@@ -41,15 +41,42 @@ def ensure_user(chat_id):
 # ---------------------------
 def get_post_id(url):
     try:
-        html = requests.get(url, timeout=10).text
+        headers = {
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/120.0 Safari/537.36"
+            ),
+            "Accept-Language": "en-US,en;q=0.9"
+        }
 
-        match = re.search(
-            r'postid-(\d+)|post-id-(\d+)|data-postid="(\d+)"',
-            html
-        )
+        r = requests.get(url, headers=headers, timeout=15)
+        html = r.text
 
-        if match:
-            return next(group for group in match.groups() if group)
+        # 1. Try normal patterns
+        patterns = [
+            r'postid-(\d+)',
+            r'post-id-(\d+)',
+            r'data-postid=["\'](\d+)["\']',
+            r'"postid":\s*"(\d+)"',
+            r'"postId":\s*"(\d+)"',
+            r'"id":(\d+),',
+        ]
+
+        for p in patterns:
+            match = re.search(p, html, re.IGNORECASE)
+            if match:
+                return match.group(1)
+
+        # 2. NEW FIX: WordPress fallback (very important)
+        wp_match = re.search(r'wp-json.*?posts/(\d+)', html)
+        if wp_match:
+            return wp_match.group(1)
+
+        # 3. DEBUG (IMPORTANT)
+        print("❌ POST ID NOT FOUND")
+        print("URL:", url)
+        print(html[:3000])  # show page preview
 
         return None
 
