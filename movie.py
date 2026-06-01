@@ -17,15 +17,29 @@ user_data = {}
 
 def get_post_id(url):
     try:
-        html = requests.get(url, timeout=10).text
+        headers = {
+            "User-Agent": "Mozilla/5.0"
+        }
 
-        match = re.search(r'postid-(\d+)|data-postid="(\d+)"', html)
-        if match:
-            return next(g for g in match.groups() if g)
+        html = requests.get(url, headers=headers, timeout=10).text
+
+        # try multiple patterns
+        patterns = [
+            r'postid-(\d+)',
+            r'data-postid="(\d+)"',
+            r'"post_id":(\d+)',
+            r'post_id=(\d+)'
+        ]
+
+        for p in patterns:
+            match = re.search(p, html)
+            if match:
+                return match.group(1)
 
         return None
 
-    except:
+    except Exception as e:
+        print("POST ID ERROR:", e)
         return None
 
 
