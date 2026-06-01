@@ -13,7 +13,7 @@ import re
 # ---------------------------
 # CONFIG
 # ---------------------------
-TOKEN = "8648355227:AAFk0H3rtjOuDdmqmt0XbQ19cGTbVhEpK80"
+TOKEN = "8648355227:AAHEK_QyvJrBfX-lSsoFO6wVqQAOQGwR_NM"
 user_data = {}
 
 # ---------------------------
@@ -39,7 +39,23 @@ def get_post_id(url):
         print("POST ID ERROR:", e)
         return None
 
+def clean_title(url):
+    try:
+        html = requests.get(url, timeout=10).text
+        match = re.search(r"<title>(.*?)</title>", html, re.IGNORECASE)
 
+        if match:
+            title = match.group(1)
+
+            # remove site branding
+            title = title.replace("– KhDiaMonD", "")
+            title = title.replace("| KhDiaMonD", "")
+            return title.strip()
+
+        return "UNKNOWN TITLE"
+    except:
+        return "UNKNOWN TITLE"
+    
 # ---------------------------
 # GET PLAYER LINK
 # ---------------------------
@@ -199,8 +215,12 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             return
 
         await query.message.reply_text(
-            f"🎬 MOVIE:\n{link}"
+            f"📺 MOVIE:\n{url}\n\n🎥 WATCH:\n{link}",
+            reply_markup=InlineKeyboardMarkup([
+                [InlineKeyboardButton("🔁 Refresh", callback_data="refresh")]
+            ]),
         )
+
 
     # ---------------- EPISODE ----------------
     elif data == "episode":
