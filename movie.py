@@ -35,28 +35,26 @@ def ensure_user(chat_id):
 # ---------------------------
 def get_post_id(url: str):
     try:
-        headers = {"User-Agent": "Mozilla/5.0"}
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Referer": url
+        }
+
         r = requests.get(url, headers=headers, timeout=15)
         html = r.text
 
-        patterns = [
-            r'postid-(\d+)',
-            r'post-id-(\d+)',
-            r'data-postid=["\'](\d+)["\']',
-            r'"postId":\s*(\d+)',
-        ]
+        # 👇 SAME AS JS: document.body.className.match(/postid-(\d+)/)
+        match = re.search(r'postid-(\d+)', html)
 
-        for p in patterns:
-            match = re.search(p, html)
-            if match:
-                return match.group(1)
+        if match:
+            return match.group(1)
 
         return None
 
     except Exception as e:
         logging.error(f"POST ID ERROR: {e}")
         return None
-
+    
 # ---------------------------
 # GET PLAYER LINK (POSTMAN STYLE)
 # ---------------------------
