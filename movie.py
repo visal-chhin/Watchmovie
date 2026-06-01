@@ -43,11 +43,15 @@ def get_post_id(url: str):
         r = requests.get(url, headers=headers, timeout=15)
         html = r.text
 
-        # 👇 SAME AS JS: document.body.className.match(/postid-(\d+)/)
-        match = re.search(r'postid-(\d+)', html)
+        soup = BeautifulSoup(html, "html.parser")
 
-        if match:
-            return match.group(1)
+        body = soup.find("body")
+        if body and body.get("class"):
+            classes = " ".join(body.get("class"))
+            match = re.search(r'postid-(\d+)', classes)
+
+            if match:
+                return match.group(1)
 
         return None
 
