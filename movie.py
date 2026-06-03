@@ -149,7 +149,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if not post_id:
             await update.message.reply_text(
-                "❌ Cannot get post ID"
+                # "❌ Cannot get post ID"
             )
             return
 
