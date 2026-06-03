@@ -26,9 +26,29 @@ app = ApplicationBuilder().token(TOKEN).build()
 # ---------------------------
 def get_post_id(url):
     try:
-        html = requests.get(url, timeout=10).text
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+            "Accept-Language": "en-US,en;q=0.9",
+        }
 
+        r = requests.get(url, headers=headers, timeout=15, allow_redirects=True)
+        html = r.text
+
+        # DEBUG (VERY IMPORTANT on Railway)
+        print("STATUS:", r.status_code)
+        print("URL AFTER REDIRECT:", r.url)
+        print("HTML SAMPLE:", html[:500])
+
+        # 1st pattern
         match = re.search(r'postid-(\d+)', html)
+
+        # 2nd fallback pattern (WordPress alternative)
+        if not match:
+            match = re.search(r'data-postid=["\'](\d+)["\']', html)
+
+        # 3rd fallback (sometimes inside scripts)
+        if not match:
+            match = re.search(r'"post_id":\s*(\d+)', html)
 
         if match:
             return match.group(1)
@@ -38,7 +58,7 @@ def get_post_id(url):
     except Exception as e:
         print("POST ID ERROR:", e)
         return None
-
+    
 def clean_title(url):
     try:
         html = requests.get(url, timeout=10).text
@@ -150,7 +170,6 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not post_id:
             await update.message.reply_text(
                 "❌ Cannot get post ID"
-                "FIX CODE MAN"
             )
             return
 
