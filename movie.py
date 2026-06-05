@@ -31,12 +31,11 @@ TOKEN = "8648355227:AAHcQQySFDT3EZvWRJ4rEh7nK7rTQXOp8qk"
 AJAX_ENDPOINT = "https://khdiamond.net/wp-admin/admin-ajax.php"
 BASE_REFERER = "https://khdiamond.net"
 
-headers = {
-    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/137.0 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Accept-Language": "en-US,en;q=0.9",
-    "Referer": "https://khdiamond.net/",
-    "Origin": "https://khdiamond.net",
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36"
+    )
 }
 
 POST_ID_REGEX = re.compile(r"postid-(\d+)")
@@ -223,11 +222,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = InlineKeyboardMarkup([
         [
             InlineKeyboardButton(
-                "📺 Movie",
+                "Movie",
                 callback_data="movie"
             ),
             InlineKeyboardButton(
-                "🎥 TV Show",
+                "TV Show",
                 callback_data="tv"
             )
         ]
@@ -278,10 +277,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         await query.message.reply_text(
-            f"📺 {media_type.upper()}:\n"
-            f"{page_url}\n\n"
-            f"🎥 WATCH:\n"
-            f"{embed_url}"
+            f"Embed URL:\n{embed_url}"
         )
 
     except Exception as e:
@@ -290,12 +286,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
     try:
-        r.raise_for_status()
-    except Exception as e:
-            print("FAILED URL:", r.url)
-            print("STATUS:", r.status_code)
-            print(r.text[:500])
-            raise
+        await loading.delete()
     except:
         pass
 
