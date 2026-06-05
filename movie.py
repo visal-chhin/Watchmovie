@@ -272,12 +272,10 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
     try:
-        r.raise_for_status()
-    except Exception as e:
-        print("FAILED URL:", r.url)
-        print("STATUS:", r.status_code)
-        print(r.text[:500])
-        raise
+        embed_url = get_stream(
+            page_url,
+            media_type
+        )
 
         await query.message.reply_text(
             f"📺 {media_type.upper()}:\n"
@@ -292,7 +290,12 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
     try:
-        await loading.delete()
+        r.raise_for_status()
+    except Exception as e:
+            print("FAILED URL:", r.url)
+            print("STATUS:", r.status_code)
+            print(r.text[:500])
+            raise
     except:
         pass
 
