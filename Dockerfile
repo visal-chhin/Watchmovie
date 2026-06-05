@@ -1,10 +1,12 @@
-FROM python:3.11-slim
+FROM python:3.13
 
 WORKDIR /app
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
-
 COPY . .
+
+RUN pip install --no-cache-dir \
+    python-telegram-bot \
+    requests \
+    python-dotenv
 
 CMD ["python", "movie.py"]
