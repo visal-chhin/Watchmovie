@@ -1,11 +1,11 @@
 {
-    "total_requests": 2,
+    "total_requests": 3,
     "users": {
         "8078437338": {
             "username": "Imsal27",
             "first_seen": "2026-06-05 09:19:01",
-            "last_seen": "2026-06-05 09:26:19",
-            "request_count": 2
+            "last_seen": "2026-06-05 09:36:36",
+            "request_count": 3
         }
     }
 }

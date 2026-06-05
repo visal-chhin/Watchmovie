@@ -26,7 +26,7 @@ from telegram.ext import (
 
 load_dotenv()
 
-TOKEN = "8648355227:AAG8C9gFEA6kpQLRpDreW3pqYoHBJrC4doA"
+TOKEN = "8648355227:AAHcQQySFDT3EZvWRJ4rEh7nK7rTQXOp8qk"
 
 AJAX_ENDPOINT = "https://khdiamond.net/wp-admin/admin-ajax.php"
 BASE_REFERER = "https://khdiamond.net"
