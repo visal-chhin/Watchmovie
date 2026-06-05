@@ -26,7 +26,7 @@ from telegram.ext import (
 
 load_dotenv()
 
-TOKEN = "8648355227:AAHEK_QyvJrBfX-lSsoFO6wVqQAOQGwR_NM"
+TOKEN = "8648355227:AAG8C9gFEA6kpQLRpDreW3pqYoHBJrC4doA"
 
 AJAX_ENDPOINT = "https://khdiamond.net/wp-admin/admin-ajax.php"
 BASE_REFERER = "https://khdiamond.net"
@@ -222,11 +222,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = InlineKeyboardMarkup([
         [
             InlineKeyboardButton(
-                "Movie",
+                "📺 Movie",
                 callback_data="movie"
             ),
             InlineKeyboardButton(
-                "TV Show",
+                "🎥 TV Show",
                 callback_data="tv"
             )
         ]
@@ -277,7 +277,10 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
         await query.message.reply_text(
-            f"Embed URL:\n{embed_url}"
+            f"📺 {media_type.upper()}:\n"
+            f"{page_url}\n\n"
+            f"🎥 WATCH:\n"
+            f"{embed_url}"
         )
 
     except Exception as e:
